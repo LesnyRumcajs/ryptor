@@ -1,5 +1,5 @@
+use crate::crypto_utils;
 use rand::Rng;
-use sha2::{Digest, Sha256};
 use std::fs;
 
 const AES_BLOCK_SIZE: usize = 16;
@@ -26,9 +26,7 @@ impl Encryptor {
 
     /// Saves the current key to file
     pub fn save_key(&self) -> Result<String, std::io::Error> {
-        let mut hasher = Sha256::new();
-        hasher.input(&self.key);
-        let hash = hex::encode(hasher.result())[0..=6].to_owned();
+        let hash = crypto_utils::sha256_hex(&self.key)[0..=6].to_owned();
 
         let encoded_key = base64::encode(&self.key);
         fs::write(&hash, encoded_key)?;
