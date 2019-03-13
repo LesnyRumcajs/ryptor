@@ -1,6 +1,5 @@
 use clap::{App, Arg, SubCommand, crate_version, crate_authors, crate_name, crate_description};
-
-use crate::
+use ryptor::crypt::Encryptor;
 
 fn main() {
     let matches = App::new(crate_name!())
