@@ -34,3 +34,24 @@ impl Encryptor {
         Ok(hash)
     }
 }
+
+pub struct Decryptor {
+    key: [u8; AES_BLOCK_SIZE],
+}
+
+impl Decryptor {
+    fn from_file(path_to_key: &str) -> Result<Decryptor, std::io::Error> {
+        let key = fs::read(&path_to_key)?;
+        let key = base64::decode(&key).unwrap();
+        
+        if key.len() != AES_BLOCK_SIZE {
+            return Err("Failed");
+        }
+
+        Ok(Decryptor {key})
+    }
+
+    fn decrypt(&self, path: &str) -> Result<(), std::io::Error> {
+        unimplemented!();
+    }
+}
