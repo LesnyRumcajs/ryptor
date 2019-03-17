@@ -4,4 +4,5 @@
 File encryption / decryption application
 
 **Work in progress**
-![alt text](http://res.publicdomainfiles.com/pdf_view/62/13544697014037.png "Logo Title Text 1")
+
+<img src="http://res.publicdomainfiles.com/pdf_view/62/13544697014037.png" alt="wip" width="250"/>
