@@ -1,6 +1,5 @@
 use crate::config::Secrets;
 use crate::crypto_utils;
-
 use std::fs;
 
 const AES_BLOCK_SIZE: usize = 16;
@@ -10,6 +9,8 @@ use aes_soft::Aes128;
 use block_modes::block_padding::Pkcs7;
 use block_modes::{BlockMode, Cbc};
 
+use log::{info, trace, warn};
+
 pub struct Encryptor {
     secrets: Secrets,
 }
@@ -17,6 +18,7 @@ pub struct Encryptor {
 impl Encryptor {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Encryptor {
+        trace!("Creating encryptor with random key");
         Encryptor {
             secrets: Secrets {
                 key: Encryptor::generate_key(),
@@ -25,11 +27,20 @@ impl Encryptor {
         }
     }
 
+    pub fn with_secret(path_to_secret: &str) -> Result<Encryptor, std::io::Error> {
+        trace!("Creating encryptor with key from: {}", path_to_secret);
+        let data = fs::read(path_to_secret)?;
+        Ok(Encryptor {
+            secrets: serde_yaml::from_slice(&data).unwrap(),
+        })
+    }
+
     fn generate_key() -> Vec<u8> {
         (0..AES_BLOCK_SIZE).map(|_| rand::random::<u8>()).collect()
     }
 
     pub fn encrypt(&self, path: &str) -> Result<(), std::io::Error> {
+        info!("Encrypting: {}", path);
         let data = fs::read(path)?;
 
         let cipher = Aes128Cbc::new_var(&self.secrets.key, &self.secrets.iv).unwrap();
@@ -47,6 +58,7 @@ impl Encryptor {
 
         fs::write(&hash, secret)?;
 
+        info!("Saving key to: {}", hash);
         Ok(hash)
     }
 }
@@ -56,14 +68,15 @@ pub struct Decryptor {
 }
 
 impl Decryptor {
-    pub fn from_file(path_to_key: &str) -> Result<Decryptor, std::io::Error> {
-        let data = fs::read(path_to_key)?;
+    pub fn from_file(path_to_secret: &str) -> Result<Decryptor, std::io::Error> {
+        let data = fs::read(path_to_secret)?;
         Ok(Decryptor {
             secrets: serde_yaml::from_slice(&data).unwrap(),
         })
     }
 
     pub fn decrypt(&self, path: &str) -> Result<(), std::io::Error> {
+        info!("Decrypting: {}", path);
         let data = fs::read(path)?;
 
         let cipher = Aes128Cbc::new_var(&self.secrets.key, &self.secrets.iv).unwrap();
