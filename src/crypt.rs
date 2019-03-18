@@ -1,5 +1,4 @@
 use crate::config::Secrets;
-use crate::crypto_utils;
 use std::fs;
 
 const AES_BLOCK_SIZE: usize = 16;
@@ -9,7 +8,7 @@ use aes_soft::Aes128;
 use block_modes::block_padding::Pkcs7;
 use block_modes::{BlockMode, Cbc};
 
-use log::{info, trace, warn};
+use log::{info, trace};
 
 pub struct Encryptor {
     secrets: Secrets,
@@ -27,7 +26,7 @@ impl Encryptor {
         }
     }
 
-    pub fn with_secret(path_to_secret: &str) -> Result<Encryptor, std::io::Error> {
+    pub fn from_secret(path_to_secret: &str) -> Result<Encryptor, std::io::Error> {
         trace!("Creating encryptor with key from: {}", path_to_secret);
         let data = fs::read(path_to_secret)?;
         Ok(Encryptor {
@@ -51,15 +50,12 @@ impl Encryptor {
         Ok(())
     }
 
-    pub fn save_key(&self) -> Result<String, std::io::Error> {
-        let hash = crypto_utils::sha256_hex(&self.secrets.key)[0..=6].to_owned();
-
+    pub fn save_key(&self, filename: &str) -> Result<(), std::io::Error> {
+        info!("Saving key to `{}`", filename);
         let secret = serde_yaml::to_string(&self.secrets).unwrap();
 
-        fs::write(&hash, secret)?;
-
-        info!("Saving key to: {}", hash);
-        Ok(hash)
+        fs::write(filename, secret)?;
+        Ok(())
     }
 }
 

@@ -23,9 +23,14 @@ fn main() -> Result<(), std::io::Error> {
                 .about("Encrypts data")
                 .arg(Arg::with_name("path").index(1).required(true))
                 .arg(
-                    Arg::with_name("secret")
+                    Arg::with_name("to_secret")
+                        .long("to-secret")
+                        .takes_value(true),
+                )
+                .arg(
+                    Arg::with_name("from_secret")
                         .short("s")
-                        .long("secret")
+                        .long("from-secret")
                         .takes_value(true),
                 ),
         )
@@ -33,10 +38,10 @@ fn main() -> Result<(), std::io::Error> {
             SubCommand::with_name("decrypt")
                 .about("Decrypts data")
                 .arg(
-                    Arg::with_name("secret")
+                    Arg::with_name("from_secret")
                         .required(true)
                         .short("s")
-                        .long("secret")
+                        .long("from-secret")
                         .takes_value(true),
                 )
                 .arg(Arg::with_name("path").index(1).required(true)),
@@ -49,11 +54,11 @@ fn main() -> Result<(), std::io::Error> {
 
             let path = matcher.value_of("path").unwrap();
 
-            let encryptor = if matcher.is_present("secret") {
-                Encryptor::with_secret(matcher.value_of("secret").unwrap())?
+            let encryptor = if matcher.is_present("from_secret") {
+                Encryptor::from_secret(matcher.value_of("from_secret").unwrap())?
             } else {
                 let encryptor = Encryptor::new();
-                encryptor.save_key()?;
+                encryptor.save_key(matcher.value_of("to_secret").unwrap_or("secret.key"))?;
                 encryptor
             };
 
@@ -69,7 +74,7 @@ fn main() -> Result<(), std::io::Error> {
             let matcher = matches.subcommand_matches("decrypt").unwrap();
 
             let path = matcher.value_of("path").unwrap();
-            let secret = matcher.value_of("secret").unwrap();
+            let secret = matcher.value_of("from_secret").unwrap();
 
             let decryptor = Decryptor::from_file(secret)?;
             for entry in WalkDir::new(path)
