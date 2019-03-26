@@ -1,10 +1,12 @@
 use clap::{crate_authors, crate_description, crate_name, crate_version, App, Arg, SubCommand};
+
 use log::trace;
 use simplelog::{LevelFilter, SimpleLogger};
 
 use ryptor::crypt::{Decryptor, Encryptor};
 
 use walkdir::WalkDir;
+use std::path::Path;
 
 fn main() -> Result<(), std::io::Error> {
     if SimpleLogger::init(LevelFilter::Trace, simplelog::Config::default()).is_err() {
@@ -55,10 +57,10 @@ fn main() -> Result<(), std::io::Error> {
             let path = matcher.value_of("path").unwrap();
 
             let encryptor = if matcher.is_present("from_secret") {
-                Encryptor::from_secret(matcher.value_of("from_secret").unwrap())?
+                Encryptor::from_secret(Path::new(matcher.value_of("from_secret").unwrap()))?
             } else {
                 let encryptor = Encryptor::new();
-                encryptor.save_key(matcher.value_of("to_secret").unwrap_or("secret.key"))?;
+                encryptor.save_key(Path::new(matcher.value_of("to_secret").unwrap_or("secret.key")))?;
                 encryptor
             };
 
@@ -67,7 +69,7 @@ fn main() -> Result<(), std::io::Error> {
                 .filter_map(Result::ok)
                 .filter(|e| !e.file_type().is_dir())
             {
-                encryptor.encrypt(entry.path().to_str().unwrap())?;
+                encryptor.encrypt(entry.path())?;
             }
         }
         Some("decrypt") => {
@@ -76,13 +78,13 @@ fn main() -> Result<(), std::io::Error> {
             let path = matcher.value_of("path").unwrap();
             let secret = matcher.value_of("from_secret").unwrap();
 
-            let decryptor = Decryptor::from_file(secret)?;
+            let decryptor = Decryptor::from_file(Path::new(secret))?;
             for entry in WalkDir::new(path)
                 .into_iter()
                 .filter_map(Result::ok)
                 .filter(|e| !e.file_type().is_dir())
             {
-                decryptor.decrypt(entry.path().to_str().unwrap())?;
+                decryptor.decrypt(entry.path())?;
             }
         }
         _ => println!("Unknown command"),
