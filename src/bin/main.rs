@@ -3,10 +3,10 @@ use clap::{crate_authors, crate_description, crate_name, crate_version, App, Arg
 use log::trace;
 use simplelog::{LevelFilter, SimpleLogger};
 
-use ryptor::crypt::{Decryptor, Encryptor};
-
-use walkdir::WalkDir;
+use ryptor::decryptor::Decryptor;
+use ryptor::encryptor::Encryptor;
 use std::path::Path;
+use walkdir::WalkDir;
 
 fn main() -> Result<(), std::io::Error> {
     if SimpleLogger::init(LevelFilter::Trace, simplelog::Config::default()).is_err() {
@@ -60,7 +60,9 @@ fn main() -> Result<(), std::io::Error> {
                 Encryptor::from_secret(Path::new(matcher.value_of("from_secret").unwrap()))?
             } else {
                 let encryptor = Encryptor::new();
-                encryptor.save_key(Path::new(matcher.value_of("to_secret").unwrap_or("secret.key")))?;
+                encryptor.save_key(Path::new(
+                    matcher.value_of("to_secret").unwrap_or("secret.key"),
+                ))?;
                 encryptor
             };
 
