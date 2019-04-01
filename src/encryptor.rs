@@ -1,7 +1,6 @@
 type Aes128Cbc = Cbc<Aes128, Pkcs7>;
 
-use crate::config::Secrets;
-use crate::crypt;
+use crate::secrets::Secrets;
 
 use aes_soft::Aes128;
 use block_modes::block_padding::Pkcs7;
@@ -20,10 +19,7 @@ impl Encryptor {
     pub fn new() -> Encryptor {
         trace!("Creating encryptor with random key");
         Encryptor {
-            secrets: Secrets {
-                key: Encryptor::generate_key(),
-                iv: Encryptor::generate_key(),
-            },
+            secrets: Secrets::generate(),
         }
     }
 
@@ -33,16 +29,9 @@ impl Encryptor {
             path_to_secret.to_str().unwrap()
         );
 
-        let data = fs::read(path_to_secret)?;
         Ok(Encryptor {
-            secrets: serde_yaml::from_slice(&data).unwrap(),
+            secrets: Secrets::load_from(path_to_secret)?,
         })
-    }
-
-    fn generate_key() -> Vec<u8> {
-        (0..crypt::AES_BLOCK_SIZE)
-            .map(|_| rand::random::<u8>())
-            .collect()
     }
 
     pub fn encrypt(&self, path: &Path) -> Result<(), std::io::Error> {
@@ -59,10 +48,6 @@ impl Encryptor {
 
     pub fn save_key(&self, filename: &Path) -> Result<(), std::io::Error> {
         info!("Saving key to `{}`", filename.to_str().unwrap());
-
-        let secret = serde_yaml::to_string(&self.secrets).unwrap();
-
-        fs::write(filename, secret)?;
-        Ok(())
+        self.secrets.save_to(filename)
     }
 }

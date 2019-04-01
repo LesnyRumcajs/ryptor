@@ -1,4 +1,4 @@
-use crate::config::Secrets;
+use crate::secrets::Secrets;
 
 use aes_soft::Aes128;
 use block_modes::block_padding::Pkcs7;
