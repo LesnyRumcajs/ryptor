@@ -15,6 +15,7 @@ pub struct Encryptor {
 }
 
 impl Encryptor {
+    /// Creates new Encryptor instance with random secrets
     #[allow(clippy::new_without_default)]
     pub fn new() -> Encryptor {
         trace!("Creating encryptor with random key");
@@ -23,7 +24,8 @@ impl Encryptor {
         }
     }
 
-    pub fn from_secret(path_to_secret: &Path) -> Result<Encryptor, std::io::Error> {
+    /// Creates new Encryptor from secrets file
+    pub fn from_file(path_to_secret: &Path) -> Result<Encryptor, std::io::Error> {
         trace!(
             "Creating encryptor with key from: {}",
             path_to_secret.to_str().unwrap()
@@ -34,6 +36,7 @@ impl Encryptor {
         })
     }
 
+    /// Encrypts the target file under secrets
     pub fn encrypt(&self, path: &Path) -> Result<(), std::io::Error> {
         info!("Encrypting: {}", path.to_str().unwrap());
         let data = fs::read(path)?;
@@ -46,8 +49,59 @@ impl Encryptor {
         Ok(())
     }
 
-    pub fn save_key(&self, filename: &Path) -> Result<(), std::io::Error> {
-        info!("Saving key to `{}`", filename.to_str().unwrap());
+    /// Saves the currents secrets to a file
+    pub fn save_secrets(&self, filename: &Path) -> Result<(), std::io::Error> {
+        info!("Saving secrets to `{}`", filename.to_str().unwrap());
         self.secrets.save_to(filename)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+
+    fn create_secrets_file() -> NamedTempFile {
+        let mut secrets_file = tempfile::NamedTempFile::new().unwrap();
+        write!(
+            secrets_file,
+            "---
+key: hxltPZWlLGDfaJjGbC0E6w==
+iv: 2cKt1xcHkbpXLSq0ShzZkg=="
+        )
+        .unwrap();
+
+        secrets_file
+    }
+
+    #[test]
+    fn create_new_encryptor() {
+        let encryptor = Encryptor::new();
+        assert!(encryptor.secrets.key.len() > 0);
+        assert!(encryptor.secrets.iv.len() > 0);
+    }
+
+    #[test]
+    fn create_encryptor_from_file() {
+        let secrets_file = create_secrets_file();
+        let encryptor = Encryptor::from_file(secrets_file.path()).unwrap();
+        assert!(encryptor.secrets.key.len() > 0);
+        assert!(encryptor.secrets.iv.len() > 0);
+    }
+
+    #[test]
+    fn encrypt() {
+        let secrets_file = create_secrets_file();
+        let encryptor = Encryptor::from_file(secrets_file.path()).unwrap();
+
+        let target_file = tempfile::NamedTempFile::new().unwrap();
+        write!(&target_file, "test");
+
+        encryptor.encrypt(target_file.path());
+
+        let expected_ciphertext = hex::decode("526bf0d5fc310ae0bff151650b7a3ae8").unwrap();
+        assert_eq!(fs::read(target_file).unwrap(), expected_ciphertext);
     }
 }

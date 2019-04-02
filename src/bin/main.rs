@@ -57,10 +57,10 @@ fn main() -> Result<(), std::io::Error> {
             let path = matcher.value_of("path").unwrap();
 
             let encryptor = if matcher.is_present("from_secret") {
-                Encryptor::from_secret(Path::new(matcher.value_of("from_secret").unwrap()))?
+                Encryptor::from_file(Path::new(matcher.value_of("from_secret").unwrap()))?
             } else {
                 let encryptor = Encryptor::new();
-                encryptor.save_key(Path::new(
+                encryptor.save_secrets(Path::new(
                     matcher.value_of("to_secret").unwrap_or("secret.key"),
                 ))?;
                 encryptor
