@@ -73,7 +73,7 @@ iv: 2cKt1xcHkbpXLSq0ShzZkg=="
     fn decrypt_file() {
         let mut ciphertext_file = tempfile::NamedTempFile::new().unwrap();
         ciphertext_file
-            .write(&hex::decode("526bf0d5fc310ae0bff151650b7a3ae8").unwrap())
+            .write_all(&hex::decode("526bf0d5fc310ae0bff151650b7a3ae8").unwrap())
             .unwrap();
 
         let decryptor = create_decryptor();
@@ -88,7 +88,7 @@ iv: 2cKt1xcHkbpXLSq0ShzZkg=="
     fn decrypt_fail() {
         let mut ciphertext_file = tempfile::NamedTempFile::new().unwrap();
         ciphertext_file
-            .write(&hex::decode("526bf0d5fc312ae0bff151650b7a3ae8").unwrap())
+            .write_all(&hex::decode("526bf0d5fc312ae0bff151650b7a3ae8").unwrap())
             .unwrap();
 
         let decryptor = create_decryptor();

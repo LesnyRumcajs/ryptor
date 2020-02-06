@@ -79,16 +79,16 @@ iv: 2cKt1xcHkbpXLSq0ShzZkg=="
     #[test]
     fn create_new_encryptor() {
         let encryptor = Encryptor::new();
-        assert!(encryptor.secrets.key.len() > 0);
-        assert!(encryptor.secrets.iv.len() > 0);
+        assert!(!encryptor.secrets.key.is_empty());
+        assert!(!encryptor.secrets.iv.is_empty());
     }
 
     #[test]
     fn create_encryptor_from_file() {
         let secrets_file = create_secrets_file();
         let encryptor = Encryptor::from_file(secrets_file.path()).unwrap();
-        assert!(encryptor.secrets.key.len() > 0);
-        assert!(encryptor.secrets.iv.len() > 0);
+        assert!(!encryptor.secrets.key.is_empty());
+        assert!(!encryptor.secrets.iv.is_empty());
     }
 
     #[test]
@@ -97,9 +97,9 @@ iv: 2cKt1xcHkbpXLSq0ShzZkg=="
         let encryptor = Encryptor::from_file(secrets_file.path()).unwrap();
 
         let target_file = tempfile::NamedTempFile::new().unwrap();
-        write!(&target_file, "test");
+        assert!(write!(&target_file, "test").is_ok());
 
-        encryptor.encrypt(target_file.path());
+        assert!(encryptor.encrypt(target_file.path()).is_ok());
 
         let expected_ciphertext = hex::decode("526bf0d5fc310ae0bff151650b7a3ae8").unwrap();
         assert_eq!(fs::read(target_file).unwrap(), expected_ciphertext);
