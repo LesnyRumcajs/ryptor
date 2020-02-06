@@ -1,6 +1,7 @@
 image: 'rust:latest'
 
 stages:
+  - lint
   - test
   - doc
   - build
@@ -12,6 +13,10 @@ variables:
 before_script:
   - apt update -yq
 
+lint:
+  stage: lint
+  script:
+    - cargo clippy --all-targets --all-features -- -D warnings
 test:
   stage: test
   script:
